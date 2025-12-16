@@ -3,22 +3,24 @@ project('BlackHoleSimulator', 'cpp',
         default_options : ['warning_level=3', 'cpp_std=c++20'])
 
 sources = files(
-        'src/main.cpp'
+  'src/main.cpp',
+  'src/shader_program.cpp',
+  'src/render_shader.cpp',
 )
 
 dependencies = [
-        dependency('sdl3'),
-        dependency('glm'),
-        dependency('imgui'),
-        dependency('glbinding'),
-        dependency('gl'),
+  dependency('sdl3'),
+  dependency('glm'),
+  dependency('imgui'),
+  dependency('glbinding'),
+  dependency('gl'),
 ]
 
 BlackHoleSimulator = executable(
-        'BlackHoleSimulator',
-        sources,
-        dependencies : dependencies,
-        install : true
+  'BlackHoleSimulator',
+  sources,
+  dependencies : dependencies,
+  install : true
 )
 
 test('test', BlackHoleSimulator)

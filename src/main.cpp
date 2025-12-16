@@ -11,6 +11,7 @@
 
 #include <glm/glm.hpp>
 
+#include "render_shader.h"
 #include "glbinding/gl/bitfield.h"
 
 using namespace gl;
