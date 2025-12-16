@@ -11,6 +11,7 @@ dependencies = [
         dependency('glm'),
         dependency('imgui'),
         dependency('glbinding'),
+        dependency('gl'),
 ]
 
 BlackHoleSimulator = executable(
