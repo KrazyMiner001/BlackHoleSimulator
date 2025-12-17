@@ -7,7 +7,7 @@
 
 class compute_shader : public shader_program {
 public:
-    explicit compute_shader(const std::string &path);
+    compute_shader(const std::string &path);
 };
 
 

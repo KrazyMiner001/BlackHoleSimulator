@@ -6,6 +6,7 @@ sources = files(
   'src/main.cpp',
   'src/shader_program.cpp',
   'src/render_shader.cpp',
+  'src/compute_shader.cpp',
 )
 
 dependencies = [
@@ -20,7 +21,8 @@ BlackHoleSimulator = executable(
   'BlackHoleSimulator',
   sources,
   dependencies : dependencies,
-  install : true
+  install : true,
+  include_directories : 'include',
 )
 
 test('test', BlackHoleSimulator)
