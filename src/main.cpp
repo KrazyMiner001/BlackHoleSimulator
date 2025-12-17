@@ -18,8 +18,25 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 
+#define WIDTH 600
+#define HEIGHT 480
+
 using namespace gl;
 using namespace glm;
+
+void rerender_canvas(const compute_shader render_shader, const float render_scale, const float display_x, const float display_y, float &render_width, float &render_height, unsigned int texture0) {
+    render_width = ceil(display_x * render_scale / 8) * 8;
+    render_height = ceil(display_y * render_scale / 8) * 8;
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, static_cast<int>(render_width), static_cast<int>(render_height), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+    glBindImageTexture(0, texture0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+
+    render_shader.use();
+    glDispatchCompute(ceil(render_width / 8), ceil(render_height / 8), 1);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+}
 
 int main() {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
@@ -38,8 +55,8 @@ int main() {
 
     SDL_Window *window = SDL_CreateWindow(
         "Black Hole Simulator",
-        600,
-        480,
+        WIDTH,
+        HEIGHT,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     );
 
@@ -72,27 +89,31 @@ int main() {
     const render_shader quad_shader("resources/shaders/quad.vertex.glsl", "resources/shaders/quad.fragment.glsl");
     const compute_shader render_shader("resources/shaders/render.compute.glsl");
 
+    float render_scale = 1;
+    float render_width = WIDTH;
+    float render_height = HEIGHT;
+
     unsigned int texture0, texture1;
     glGenTextures(1, &texture0);
     glGenTextures(1, &texture1);
 
-    int width, height, channels_in_image;
-    unsigned char* image_data = stbi_load("resources/checkerboard.png", &width, &height, &channels_in_image, 4);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-    stbi_image_free(image_data);
-    glBindImageTexture(1, texture1, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, static_cast<int>(render_width), static_cast<int>(render_height), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glBindImageTexture(0, texture0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
 
+    int image_width, image_height, channels_in_image;
+    unsigned char* image_data = stbi_load("resources/checkerboard.png", &image_width, &image_height, &channels_in_image, 4);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+    stbi_image_free(image_data);
+    glBindImageTexture(1, texture1, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+
     render_shader.use();
-    glDispatchCompute(512 / 8, 512 / 8, 1);
+    glDispatchCompute(ceil(render_width / 8), ceil(render_height / 8), 1);
 
     constexpr float vertices[] = {
         -1, -1, 0,
@@ -131,12 +152,23 @@ int main() {
                 case SDL_EVENT_QUIT:
                     done = true;
                     break;
+                case SDL_EVENT_WINDOW_RESIZED: {
+                    int width, height;
+                    SDL_GetWindowSize(window, &width, &height);
+                    rerender_canvas(render_shader, render_scale, static_cast<float>(width), static_cast<float>(height), render_width, render_height, texture0);
+                }
             }
         }
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
+
+        ImGui::Begin("Controls");
+        if (ImGui::SliderFloat("Resolution Scale", &render_scale,0.125, 2)) {
+            rerender_canvas(render_shader, render_scale, io.DisplaySize.x, io.DisplaySize.y, render_width, render_height, texture0);
+        }
+        ImGui::End();
 
         ImGui::Render();
 
