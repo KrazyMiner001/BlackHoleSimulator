@@ -16,6 +16,7 @@
 #include "glbinding/gl/bitfield.h"
 
 #define STB_IMAGE_IMPLEMENTATION
+#include "blackhole_renderer.h"
 #include "../include/stb_image.h"
 
 #define WIDTH 600
@@ -86,61 +87,7 @@ int main() {
     ImGui_ImplSDL3_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init("#version 460");
 
-    const render_shader quad_shader("resources/shaders/quad.vertex.glsl", "resources/shaders/quad.fragment.glsl");
-    const compute_shader render_shader("resources/shaders/render.compute.glsl");
-
-    float render_scale = 1;
-    float render_width = WIDTH;
-    float render_height = HEIGHT;
-
-    unsigned int texture0, texture1;
-    glGenTextures(1, &texture0);
-    glGenTextures(1, &texture1);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, static_cast<int>(render_width), static_cast<int>(render_height), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    glBindImageTexture(0, texture0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-
-    int image_width, image_height, channels_in_image;
-    unsigned char* image_data = stbi_load("resources/checkerboard.png", &image_width, &image_height, &channels_in_image, 4);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-    stbi_image_free(image_data);
-    glBindImageTexture(1, texture1, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-
-    render_shader.use();
-    glDispatchCompute(ceil(render_width / 8), ceil(render_height / 8), 1);
-
-    constexpr float vertices[] = {
-        -1, -1, 0,
-        -1, 1, 0,
-        1, -1, 0,
-        1, 1, 0,
-    };
-
-    const unsigned int indices[] = {
-        0, 1, 2,
-        1, 2, 3,
-    };
-
-    unsigned int EBO, VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glEnableVertexArrayAttrib(VAO, 0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * sizeof(float), nullptr);
+    blackhole_renderer renderer(1, WIDTH, HEIGHT);
 
     SDL_Event event;
     bool done = false;
@@ -155,8 +102,10 @@ int main() {
                 case SDL_EVENT_WINDOW_RESIZED: {
                     int width, height;
                     SDL_GetWindowSize(window, &width, &height);
-                    rerender_canvas(render_shader, render_scale, static_cast<float>(width), static_cast<float>(height), render_width, render_height, texture0);
+                    renderer.window_height = static_cast<float>(height);
+                    renderer.window_width = static_cast<float>(width);
                 }
+                default: ;
             }
         }
 
@@ -165,24 +114,16 @@ int main() {
         ImGui::NewFrame();
 
         ImGui::Begin("Controls");
-        if (ImGui::SliderFloat("Resolution Scale", &render_scale,0.125, 2)) {
-            rerender_canvas(render_shader, render_scale, io.DisplaySize.x, io.DisplaySize.y, render_width, render_height, texture0);
-        }
+        ImGui::SliderFloat("Resolution Scale", &renderer.display_scale,0.125, 2);
         ImGui::End();
 
         ImGui::Render();
 
-        glViewport(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+        glViewport(0, 0, static_cast<int>(io.DisplaySize.x), static_cast<int>(io.DisplaySize.y));
         glClearColor(0.2, 0.3, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture0);
-
-        quad_shader.use();
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-        glBindVertexArray(0);
+        renderer.render();
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);

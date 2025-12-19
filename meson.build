@@ -7,6 +7,7 @@ sources = files(
   'src/shader_program.cpp',
   'src/render_shader.cpp',
   'src/compute_shader.cpp',
+  'src/blackhole_renderer.cpp',
 )
 
 dependencies = [
