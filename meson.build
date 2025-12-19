@@ -8,6 +8,7 @@ sources = files(
   'src/render_shader.cpp',
   'src/compute_shader.cpp',
   'src/blackhole_renderer.cpp',
+  'src/gamepad.cpp',
 )
 
 dependencies = [

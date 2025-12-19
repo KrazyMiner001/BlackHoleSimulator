@@ -1,6 +1,6 @@
 ﻿#include <glbinding/glbinding.h>
 #include <glbinding/gl/functions.h>
-#include <glbinding/gl/enum.h>
+#include <glbinding/gl/bitfield.h>
 
 #include <SDL3/SDL.h>
 
@@ -9,35 +9,16 @@
 #include <imgui_impl_sdl3.h>
 #include <iostream>
 
-#include <glm/glm.hpp>
-
-#include "render_shader.h"
-#include "compute_shader.h"
-#include "glbinding/gl/bitfield.h"
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "blackhole_renderer.h"
-#include "../include/stb_image.h"
+#include "stb_image.h"
+#include "glm/gtc/type_ptr.hpp"
 
 #define WIDTH 600
 #define HEIGHT 480
 
 using namespace gl;
 using namespace glm;
-
-void rerender_canvas(const compute_shader render_shader, const float render_scale, const float display_x, const float display_y, float &render_width, float &render_height, unsigned int texture0) {
-    render_width = ceil(display_x * render_scale / 8) * 8;
-    render_height = ceil(display_y * render_scale / 8) * 8;
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, static_cast<int>(render_width), static_cast<int>(render_height), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
-    glBindImageTexture(0, texture0, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-
-    render_shader.use();
-    glDispatchCompute(ceil(render_width / 8), ceil(render_height / 8), 1);
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-}
 
 int main() {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
@@ -105,6 +86,8 @@ int main() {
                     renderer.window_height = static_cast<float>(height);
                     renderer.window_width = static_cast<float>(width);
                 }
+                case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+                    renderer.gamepad_input(event.gaxis);
                 default: ;
             }
         }
@@ -115,6 +98,8 @@ int main() {
 
         ImGui::Begin("Controls");
         ImGui::SliderFloat("Resolution Scale", &renderer.display_scale,0.125, 2);
+        ImGui::InputFloat3("Position", value_ptr(renderer.position));
+        ImGui::InputFloat2("Angle", &renderer.yaw);
         ImGui::End();
 
         ImGui::Render();
