@@ -20,12 +20,12 @@ void main() {
 
     Ray ray;
     ray.position = vec3((group_coords - 0.5 * num_invocations) / num_invocations.x, 0);
-    ray.position *= transform;
+    ray.position = ray.position * transform;
     ray.position += camera_position;
-    ray.direction = transform * vec3(0, 0, 1);// + ray.position / 5;
+    ray.direction = vec3(0, 0, 1) * transform;// + ray.position / 5;
 
     int depth = 0;
-//    imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(vec3(length(ray.position) / 10), 1));
+//    imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(transform[2] / 2 + 0.5, 1));
 //    return;
 
     while (depth < MAX_DEPTH) {
@@ -33,11 +33,11 @@ void main() {
         ray.position += ray.direction * DELTA;
 
         if (length(ray.position) < 0.5) {
-            imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(ray.direction, 1));
+            imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(0, 0, 0, 1));
             return;
         }
 
-        if (length(ray.position) > 10) {
+        if (length(ray.position) > 20) {
             imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(0.3, 0.2, 0.7, 1));
             return;
         }

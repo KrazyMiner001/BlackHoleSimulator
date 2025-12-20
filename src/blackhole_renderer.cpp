@@ -68,8 +68,8 @@ blackhole_renderer::blackhole_renderer(const float display_scale, const float wi
 }
 
 void blackhole_renderer::render() {
-    yaw -= gamepad.get_right_stick().x;
-    pitch -= gamepad.get_right_stick().y;
+    yaw += gamepad.get_right_stick().x;
+    pitch += gamepad.get_right_stick().y;
     pitch = clamp(pitch, -90.0f, 90.0f);
 
     transform_matrix = mat3(5);
@@ -84,8 +84,8 @@ void blackhole_renderer::render() {
         0, sin(radians(pitch)), cos(radians(pitch))
     );
 
-    position -= gamepad.get_left_stick().y * 0.01f * transform_matrix * vec3(0, 0, 1);
-    position += gamepad.get_left_stick().x * 0.01f * transform_matrix * vec3(1, 0, 0);
+    position -= gamepad.get_left_stick().y * 0.01f * vec3(0, 0, 1) * transform_matrix;
+    position += gamepad.get_left_stick().x * 0.01f * vec3(1, 0, 0) * transform_matrix;
 
     render_width = std::ceil(window_width * display_scale / 8) * 8;
     render_height = std::ceil(window_height * display_scale / 8) * 8;

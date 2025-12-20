@@ -98,8 +98,6 @@ int main() {
 
         ImGui::Begin("Controls");
         ImGui::SliderFloat("Resolution Scale", &renderer.display_scale,0.125, 2);
-        ImGui::InputFloat3("Position", value_ptr(renderer.position));
-        ImGui::InputFloat2("Angle", &renderer.yaw);
         ImGui::End();
 
         ImGui::Render();

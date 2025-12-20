@@ -18,7 +18,7 @@ public:
 
     void render();
 
-public:
+private:
     float render_width;
     float render_height;
     render_shader quad_shader;
@@ -27,7 +27,7 @@ public:
     unsigned int texture0 = 0, texture1 = 0;
     glm::mat3 transform_matrix;
     glm::vec3 position;
-    float yaw = 90, pitch = 0;
+    float yaw = 0, pitch = 0;
     gamepad gamepad{};
 };
 
