@@ -58,7 +58,7 @@ blackhole_renderer::blackhole_renderer(const float display_scale, const float wi
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, render_width, render_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     int image_width, image_height, channels;
-    unsigned char *image_data = stbi_load("resources/checkerboard.png", &image_width, &image_height, &channels, 4);
+    unsigned char *image_data = stbi_load("resources/container.jpg", &image_width, &image_height, &channels, 4);
     glGenTextures(1, &texture1);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture1);

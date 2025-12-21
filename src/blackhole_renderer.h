@@ -18,7 +18,7 @@ public:
 
     void render();
 
-private:
+public:
     float render_width;
     float render_height;
     render_shader quad_shader;
