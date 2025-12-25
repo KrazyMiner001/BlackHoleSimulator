@@ -15,6 +15,9 @@ public:
     void setVec3(const std::string &name, const glm::vec3 &value) const;
     static void setVec3(int location, const glm::vec3 &value);
 
+    void setF(const std::string &name, float value) const;
+    static void setF(int location, float value);
+
 protected:
     const unsigned int ID;
     shader_program(const unsigned int ID) : ID(ID) {}

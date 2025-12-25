@@ -24,3 +24,11 @@ void shader_program::setVec3(const std::string &name, const glm::vec3 &value) co
 void shader_program::setVec3(const int location, const glm::vec3 &value) {
     glUniform3fv(location, 1, value_ptr(value));
 }
+
+void shader_program::setF(const std::string &name, float value) const {
+    setF(glGetUniformLocation(ID, name.c_str()), value);
+}
+
+void shader_program::setF(const int location, float value) {
+    glUniform1f(location, value);
+}

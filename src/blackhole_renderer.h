@@ -11,6 +11,8 @@ public:
     float display_scale;
     float window_width;
     float window_height;
+    float eq1;
+    float eq2;
 
     blackhole_renderer(float display_scale, float window_width, float window_height);
 

@@ -1,6 +1,6 @@
 ﻿#version 460
 #define MAX_DEPTH 100000
-#define DELTA 0.001
+#define DELTA -0.1
 #define RADIUS 1
 #define PI 3.141592
 
@@ -10,6 +10,8 @@ layout (rgba32f, binding = 1) uniform image2D imgInput;
 
 layout (location = 0) uniform mat3 transform;
 layout (location = 1) uniform vec3 camera_position;
+layout (location = 2) uniform float eq1;
+layout (location = 3) uniform float eq2;
 
 struct Position {
     float r;
@@ -37,25 +39,22 @@ void main() {
 
     int depth = 0;
 
-    float eq1 = 0;
-    float eq2 = 0;
-
     if (position.r < RADIUS) {
-        imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(0, 1, 0, 1));
+        imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(1, 0, 0, 1));
         return;
     }
 
     while (depth < MAX_DEPTH) {
         float w = 1 - RADIUS / position.r;
-        float delta_phi = DELTA * exp(eq1) / (position.r * position.r);
-        float delta_t = DELTA * exp(eq2) / w;;
+        float delta_phi = DELTA * eq1 / (position.r * position.r);
+        float delta_t = DELTA * eq2 / w;
         position.phi += delta_phi;
         position.phi -= 2 * PI * floor(position.phi / (2 * PI));
         position.t += delta_t;
 
         position.r += sqrt((1 - RADIUS / position.r) * (delta_t * delta_t * (1 - RADIUS / position.r) - position.r * position.r * delta_phi * delta_phi));
 
-        if (position.r <= RADIUS) {
+        if (position.r <= RADIUS + DELTA) {
             imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(0, 0, 0, 1));
             return;
         }

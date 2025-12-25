@@ -101,6 +101,8 @@ void blackhole_renderer::render() {
     black_hole_shader.use();
     shader_program::setMat3(0, transform_matrix);
     shader_program::setVec3(1, position);
+    shader_program::setF(2, eq1);
+    shader_program::setF(3, eq2);
     glDispatchCompute(static_cast<int>(render_width / 8), static_cast<int>(render_height / 8), 1);
 
     quad_shader.use();
