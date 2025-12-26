@@ -1,6 +1,6 @@
 ﻿#version 460
 #define MAX_DEPTH 100000
-#define DELTA -0.1
+#define DELTA -0.001
 #define RADIUS 1
 #define PI 3.141592
 
@@ -31,6 +31,9 @@ void main() {
     position.t = 0;
 
     position.r = length(world_space);
+    vec3 direction = normalize(vec3(0, 0, 1) * transform);
+    float delta_u = DELTA * (-1 / position.r) * dot(direction, normalize(world_space)) / dot(direction, normalize(cross(cross(normalize(world_space), direction), normalize(world_space))));
+
     float theta = asin(world_space.y / position.r);
     vec3 rotation_axis = normalize(cross(vec3(world_space.x, 0, world_space.z), vec3(0, world_space.y, 0)));
     world_space = cos(theta)*(cross(cross(rotation_axis, world_space), rotation_axis)) + sin(theta) * cross(world_space, rotation_axis);
@@ -45,14 +48,11 @@ void main() {
     }
 
     while (depth < MAX_DEPTH) {
-        float w = 1 - RADIUS / position.r;
-        float delta_phi = DELTA * eq1 / (position.r * position.r);
-        float delta_t = DELTA * eq2 / w;
-        position.phi += delta_phi;
-        position.phi -= 2 * PI * floor(position.phi / (2 * PI));
-        position.t += delta_t;
+        position.phi += DELTA;
+        float u = 1 / position.r;
+        delta_u += DELTA * DELTA * (1.5 * RADIUS * u * u - u);
 
-        position.r += sqrt((1 - RADIUS / position.r) * (delta_t * delta_t * (1 - RADIUS / position.r) - position.r * position.r * delta_phi * delta_phi));
+        position.r += 1 / (u + delta_u);
 
         if (position.r <= RADIUS + DELTA) {
             imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(0, 0, 0, 1));
