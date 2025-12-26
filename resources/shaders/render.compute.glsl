@@ -1,7 +1,7 @@
 ﻿#version 460
 #define MAX_DEPTH 10000
 #define DELTA 0.001
-#define SCHWARZSCHILD_RADIUS 0.5
+#define SCHWARZSCHILD_RADIUS 0.3
 #define PI 3.141592
 
 layout (local_size_x = 8, local_size_y = 8) in;
@@ -30,6 +30,8 @@ void main() {
     float phi = atan(world_space.x, world_space.z);
     float theta = PI / 2 - atan(world_space.y, length(world_space.xz));
 
+    vec3 rotation_axis = vec3(world_space.z, 0, -world_space.x) / length(world_space.xz);
+
     int depth = 0;
     while (depth < MAX_DEPTH) {
         u = 1 / r;
@@ -46,7 +48,23 @@ void main() {
             return;
         }
 
+        if (r > 1.5 * SCHWARZSCHILD_RADIUS && r < 3 * SCHWARZSCHILD_RADIUS) {
+            vec3 plane_pos = vec3(r * sin(phi), 0, r * cos(phi));
+            float height = (plane_pos * sin(theta) + direction * dot(plane_pos, direction) * (1 - sin(theta)) - cross(plane_pos, direction) * cos(theta)).y;
+            if (height < 0.01 && height > -0.01) {
+                imageStore(imgOutput, ivec2(gl_GlobalInvocationID.xy), vec4(1, 0, 0, 1));
+                return;
+            }
+        }
+
         if (r > 20) {
+            vec3 plane_pos = vec3(r * sin(phi), 0, r * cos(phi));
+            vec3 pos = (plane_pos * sin(theta) + direction * dot(plane_pos, direction) * (1 - sin(theta)) - cross(plane_pos, direction) * cos(theta));
+            float new_theta = atan(length(pos.xz), pos.y);
+            float new_phi = atan(pos.z, pos.x);
+            if (new_phi > 2 * PI) new_phi -= 2 * PI;
+            if (new_phi < 0) new_phi += 2 * PI;
+
             imageStore(
                 imgOutput,
                 ivec2(gl_GlobalInvocationID.xy),
